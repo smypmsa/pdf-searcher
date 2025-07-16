@@ -1,0 +1,10 @@
+[project]
+name = "pdf-ocr-search"
+version = "1.0.0"
+description = "Local PDF OCR and keyword search tool"
+requires-python = ">=3.8"
+dependencies = [
+    "easyocr>=1.7.0",
+    "PyMuPDF>=1.23.0",
+    "openpyxl>=3.1.0",
+]

@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+
+import os
+import re
+from pathlib import Path
+import easyocr
+import fitz  # PyMuPDF
+from openpyxl import Workbook
+
+def read_keywords(file_path):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        return [line.strip() for line in f if line.strip()]
+
+def ocr_pdf(pdf_path, reader):
+    text = ""
+    try:
+        pdf_document = fitz.open(pdf_path)
+        for page_num in range(pdf_document.page_count):
+            page = pdf_document[page_num]
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # 2x scaling for better OCR
+            img_data = pix.tobytes("png")
+            
+            results = reader.readtext(img_data)
+            for (bbox, extracted_text, confidence) in results:
+                text += extracted_text + " "
+        pdf_document.close()
+    except Exception as e:
+        print(f"Error processing {pdf_path}: {e}")
+    return text
+
+def search_keywords_in_text(text, keywords):
+    text_lower = text.lower()
+    results = {}
+    for keyword in keywords:
+        keyword_lower = keyword.lower()
+        count = len(re.findall(re.escape(keyword_lower), text_lower))
+        results[keyword] = count > 0
+    return results
+
+def create_excel_report(results, keywords, output_path):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Keyword Search Results"
+    
+    # Headers
+    ws['A1'] = 'PDF File'
+    for i, keyword in enumerate(keywords, start=2):
+        ws.cell(row=1, column=i, value=keyword)
+    
+    # Data
+    for row, (pdf_file, keyword_results) in enumerate(results.items(), start=2):
+        ws.cell(row=row, column=1, value=pdf_file)
+        for col, keyword in enumerate(keywords, start=2):
+            ws.cell(row=row, column=col, value='YES' if keyword_results[keyword] else 'NO')
+    
+    wb.save(output_path)
+
+def main():
+    # Setup paths
+    keywords_file = 'keywords.txt'
+    inputs_dir = Path('inputs')
+    outputs_dir = Path('outputs')
+    
+    # Create outputs directory if it doesn't exist
+    outputs_dir.mkdir(exist_ok=True)
+    
+    # Initialize OCR reader
+    reader = easyocr.Reader(['en'])
+    
+    # Read keywords
+    if not os.path.exists(keywords_file):
+        print(f"Error: {keywords_file} not found")
+        return
+    
+    keywords = read_keywords(keywords_file)
+    if not keywords:
+        print("No keywords found")
+        return
+    
+    # Process PDFs
+    pdf_files = list(inputs_dir.glob('*.pdf'))
+    if not pdf_files:
+        print("No PDF files found in inputs/ directory")
+        return
+    
+    results = {}
+    
+    for pdf_file in pdf_files:
+        print(f"Processing {pdf_file.name}...")
+        text = ocr_pdf(pdf_file, reader)
+        keyword_results = search_keywords_in_text(text, keywords)
+        results[pdf_file.name] = keyword_results
+    
+    # Create Excel report
+    output_file = outputs_dir / 'keyword_search_results.xlsx'
+    create_excel_report(results, keywords, output_file)
+    
+    print(f"Report saved to {output_file}")
+
+if __name__ == "__main__":
+    main()
