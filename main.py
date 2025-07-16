@@ -26,15 +26,38 @@ def ocr_pdf(pdf_path, reader):
         pdf_document.close()
     except Exception as e:
         print(f"Error processing {pdf_path}: {e}")
+    
+    text = re.sub(r'\s+', ' ', text)  # Replace multiple whitespace with single space
+    text = text.strip()  # Remove leading/trailing whitespace
+    
     return text
 
 def search_keywords_in_text(text, keywords):
+    # Convert text to lowercase for case-insensitive search
     text_lower = text.lower()
     results = {}
+    
     for keyword in keywords:
         keyword_lower = keyword.lower()
-        count = len(re.findall(re.escape(keyword_lower), text_lower))
-        results[keyword] = count > 0
+        
+        # Check if keyword contains wildcards
+        if '*' in keyword_lower:
+            # Convert wildcard pattern to regex pattern
+            regex_pattern = keyword_lower.replace('*', '.*')
+            # Use word boundaries to match whole words when no wildcards at edges
+            if not keyword_lower.startswith('*'):
+                regex_pattern = r'\b' + regex_pattern
+            if not keyword_lower.endswith('*'):
+                regex_pattern = regex_pattern + r'\b'
+            
+            matches = re.findall(regex_pattern, text_lower)
+            results[keyword] = len(matches) > 0
+        else:
+            # Exact keyword search with word boundaries for case-insensitive match
+            pattern = r'\b' + re.escape(keyword_lower) + r'\b'
+            matches = re.findall(pattern, text_lower)
+            results[keyword] = len(matches) > 0
+    
     return results
 
 def create_excel_report(results, keywords, output_path):

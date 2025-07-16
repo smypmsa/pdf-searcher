@@ -1,5 +1,8 @@
 word
 example
 text
-inv
+inv*
 amount
+*total*
+pay*
+*date
