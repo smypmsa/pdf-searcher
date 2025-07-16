@@ -6,6 +6,7 @@ from pathlib import Path
 import easyocr
 import fitz  # PyMuPDF
 from openpyxl import Workbook
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def read_keywords(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -78,6 +79,16 @@ def create_excel_report(results, keywords, output_path):
     
     wb.save(output_path)
 
+def process_single_pdf(pdf_file, keywords):
+    """Process a single PDF file - for parallel execution"""
+    # Create a separate OCR reader for each thread to avoid conflicts
+    reader = easyocr.Reader(['en'])
+    
+    print(f"Processing {pdf_file.name}...")
+    text = ocr_pdf(pdf_file, reader)
+    keyword_results = search_keywords_in_text(text, keywords)
+    return pdf_file.name, keyword_results
+
 def main():
     # Setup paths
     keywords_file = 'keywords.txt'
@@ -86,9 +97,6 @@ def main():
     
     # Create outputs directory if it doesn't exist
     outputs_dir.mkdir(exist_ok=True)
-    
-    # Initialize OCR reader
-    reader = easyocr.Reader(['en'])
     
     # Read keywords
     if not os.path.exists(keywords_file):
@@ -108,11 +116,23 @@ def main():
     
     results = {}
     
-    for pdf_file in pdf_files:
-        print(f"Processing {pdf_file.name}...")
-        text = ocr_pdf(pdf_file, reader)
-        keyword_results = search_keywords_in_text(text, keywords)
-        results[pdf_file.name] = keyword_results
+    # Use parallel processing to speed up PDF processing
+    # Limit max workers to avoid resource conflicts
+    max_workers = min(4, len(pdf_files))
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all PDF processing tasks
+        future_to_pdf = {executor.submit(process_single_pdf, pdf_file, keywords): pdf_file 
+                        for pdf_file in pdf_files}
+        
+        # Collect results as they complete
+        for future in as_completed(future_to_pdf):
+            try:
+                pdf_name, keyword_results = future.result()
+                results[pdf_name] = keyword_results
+            except Exception as e:
+                pdf_file = future_to_pdf[future]
+                print(f"Error processing {pdf_file.name}: {e}")
     
     # Create Excel report
     output_file = outputs_dir / 'keyword_search_results.xlsx'
