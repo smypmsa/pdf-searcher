@@ -2,7 +2,7 @@
 
 ## Overview
 
-Enterprise-grade keyword search solution for PDF document collections using optical character recognition. Delivers comprehensive Excel reporting with complete data privacy assurance.
+Keyword search solution for PDF document collections using optical character recognition. Delivers comprehensive Excel reporting with complete data privacy assurance.
 
 Open in [Google Colab](https://colab.research.google.com/github/smypmsa/pdf-searcher/blob/main/PDF_searcher.ipynb).
 
