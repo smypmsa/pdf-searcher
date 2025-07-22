@@ -1,34 +1,57 @@
 # PDF OCR Searcher
 
-Search for keywords in PDF files using OCR and generate Excel reports.
+## Overview
 
-## Privacy & Local Processing
+Enterprise-grade keyword search solution for PDF document collections using optical character recognition. Delivers comprehensive Excel reporting with complete data privacy assurance.
 
-All data processing happens locally on your machine. No files or data are sent to external servers. The tool uses:
-- [EasyOCR](https://github.com/JaidedAI/EasyOCR) for offline OCR processing
-- [PyMuPDF](https://github.com/pymupdf/PyMuPDF) for local PDF text extraction
-- [OpenPyXL](https://openpyxl.readthedocs.io/) for local Excel file generation
+## Security Framework
 
-Your sensitive documents remain completely private and secure.
+**Data Processing**: Fully local execution environment with zero external data transmission
 
-## Setup
+**Privacy Architecture**:
+- EasyOCR for offline character recognition
+- PyMuPDF for local PDF text processing
+- OpenPyXL for local Excel generation
 
-1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/)
-2. Install dependencies:
+All document processing occurs within client infrastructure, ensuring complete confidentiality of sensitive materials.
+
+## Technical Requirements
+
+### Installation Dependencies
+1. Install [uv package manager](https://docs.astral.sh/uv/getting-started/installation/)
+2. Execute dependency installation:
    ```bash
    uv sync
    ```
 
-## Usage
+## Implementation
 
-1. Copy `keywords.txt.example` to `keywords.txt` and add your keywords (one per line)
-2. Place PDF files in the `inputs/` folder
-3. Run the script:
+### Configuration Setup
+1. Create keyword configuration file:
    ```bash
-   uv run main.py
+   cp keywords.txt.example keywords.txt
    ```
-4. Check the `outputs/` folder for the Excel report
+2. Define search terms (one keyword per line in keywords.txt)
+3. Position PDF files in `inputs/` directory
 
-## Output
+### Execution Process
+```bash
+uv run main.py
+```
 
-The tool generates `keyword_search_results.xlsx` showing which keywords were found in each PDF file.
+### Results Retrieval
+Generated reports available in `outputs/` directory
+
+## Output Specifications
+
+**Primary Deliverable**: `keyword_search_results.xlsx`
+
+**Report Contents**:
+- Keyword occurrence mapping by document
+- Location references within source files
+- Search term frequency analysis
+- Document coverage metrics
+
+## Operational Benefits
+
+Enables rapid content discovery across large document repositories while maintaining strict data governance and privacy compliance standards.
